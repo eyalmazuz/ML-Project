@@ -20,43 +20,17 @@ def run_preprocessing(path, label):
 
     return X, y, multiclass
 
-def run_experiment(model, X, y, strategy_type, k, path, params):
+def run_experiment(model, path, label, strategy_type, k, save_path, **kwargs):
+    strategy = get_strategy(strategy_type, **kwargs)
+
+    X, y = run_preprocessing(path, label)
+
+    features_mask = strategy.select_features(X, y)
+    X = X.loc[:, features_mask]
+
     cv = get_cross_validation_type(X.shape[0])
 
     trainer = Trainer(model, X, y, cv, multiclass)
     results = trainer.train()
 
-    log_results(path, model, strategy_type, k , results, **params)
-
-
-def run_tree_based_experiment(model, path, label, strategy_type, k, params):
-    for n in [100, 200, 500, 1000, 5000, 10000]:
-        params['num_estimators'] = n
-        strategy = get_strategy(strategy_type, **params)
-
-        X, y = run_preprocessing(path, label)
-
-        features_mask = strategy.select_features(X, y)
-        X = X.loc[:, features_mask]
-
-        run_experiment(model, X, y, str(strategy), k, path, params)
-
-def run_fdr_based_experiment(model, path, label, strategy_type, k, params):
-    strategy = get_strategy(strategy_type, **params)
-    X, y = run_preprocessing(path, label)
-
-    features_mask = strategy.select_features(X, y)
-    X = X.loc[:, features_mask]
-
-    run_experiment(model, X, y, str(strategy), k, path, params)
-
-
-def run_rfe_based_experiment(model, path, label, strategy_type, k, params):
-    strategy = get_strategy(strategy_type, **params)
-    X, y = run_preprocessing(path, label)
-
-    features_mask = strategy.select_features(X, y)
-    X = X.loc[:, features_mask]
-
-    run_experiment(model, X, y, str(strategy), k, path, params)
-
+    log_results(save_path, model, strategy_type, k , results, **kwargs)
