@@ -13,9 +13,8 @@ def get_cross_validation_type(df_size: int):
         cv = LeaveOneOut()
 
     elif df_size < 1000:
-        cv =  KFold(n_splits=10)
-    
+        cv =  KFold(n_splits=10, shuffle=True, random_state=42)
     else:
-        cv = KFold(n_splits=5)
+        cv = KFold(n_splits=5, shuffle=True, random_state=42)
 
     return cv

@@ -6,7 +6,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-from src.feature_selection.strategy import StrategyType
+from src.feature_selection.strategy import Strategy, StrategyType
 from src.training.train_utils import run_experiment
 
 models = [LogisticRegression, SVC, GaussianNB, KNeighborsClassifier, RandomForestClassifier]
@@ -15,13 +15,15 @@ models = [LogisticRegression, SVC, GaussianNB, KNeighborsClassifier, RandomFores
 # TODO fix this method to be a single run
 # and then have a config with all the params needed for all the runs 
 def main():
-    for (path, label) in [()]:
-        for model in models:
-            for strategy_type in StrategyType.__members__.values():
-                for k in [1,2,3,4,5,10,15,20,25,30,50,100]:
-                    params = {'num_features': k, 'discovery_rate': 0.1}
-                    run_experiment(path, model, strategy_type, k, params)
-                    
+
+    path = './data/classification_datasets/baseball.csv'
+    label = 'Hall_of_Fame'
+    kwargs = {'num_features': 5, 'num_estimators': 100}
+    model = LogisticRegression()
+    strategy_type = StrategyType.TREE_EXPLAINER
+    save_path = './data/log.csv'
+
+    run_experiment(model, path, label, strategy_type, save_path, **kwargs)
 
 if __name__ == '__main__':
     main()

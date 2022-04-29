@@ -66,7 +66,9 @@ class OutlierRemover(TransformerMixin):
     
     def transform(self, X, y=None):
         X_copy = X.copy()
-        X_copy = self.variance_threshold.fit_transform(X)
+        self.variance_threshold.fit(X)
+        X_copy = X_copy.loc[:, self.variance_threshold.get_support()]
+        X_copy[:] = self.variance_threshold.transform(X_copy)
         return X_copy
 
 class Normalizer(TransformerMixin):

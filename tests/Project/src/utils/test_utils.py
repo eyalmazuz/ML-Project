@@ -13,7 +13,7 @@ class TestUtils(unittest.TestCase):
         if os.path.exists('./data/log.csv'):
             os.remove('./data/log.csv')
 
-    def test_no_df(self):
+    def test_log_no_df(self):
         self.assertFalse(os.path.exists('./data/log.csv'))
 
         log_results('./data/log.csv',
@@ -32,7 +32,7 @@ class TestUtils(unittest.TestCase):
         df = pd.read_csv('./data/log.csv')
         self.assertEqual(df.shape[0], 1)
 
-    def test_with_df(self):
+    def test_log_with_df(self):
         log_results('./data/log.csv',
                     'model',
                     'strategy',
