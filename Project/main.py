@@ -18,9 +18,9 @@ def main():
 
     path = './data/classification_datasets/baseball.csv'
     label = 'Hall_of_Fame'
-    kwargs = {'num_features': 5, 'num_estimators': 100}
+    kwargs = {'num_features': 5, 'false_discovery_rate': 0.1, 'num_estimators': 100}
     model = LogisticRegression()
-    strategy_type = StrategyType.TREE_EXPLAINER
+    strategy_type = StrategyType.RANDOM_FOREST
     save_path = './data/log.csv'
 
     run_experiment(model, path, label, strategy_type, save_path, **kwargs)

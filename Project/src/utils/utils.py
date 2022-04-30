@@ -18,7 +18,7 @@ def log_results(path, model, strategy, results, **kwargs):
     di['average test time'] = kwargs['test_time']
 
     for metric, score in results.items():
-        di[metric] = score
+        di[metric] = round(score, 4)
 
     for key, value in di.items():
         di[key] = [value]
