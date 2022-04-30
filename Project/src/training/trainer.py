@@ -15,6 +15,7 @@ class Trainer:
     def train(self, X, y):
         avg_acc, avg_auc, avg_pr, avg_mcc = 0, 0, 0, 0
         avg_train_time, avg_infer_time = 0, 0
+        probas, preds, labels = [], [], []
         for i, (train_index, test_index) in (t := tqdm(enumerate(self.cv.split(X, y)))):
             t.set_description(f'Fold: {i + 1}')
             X_train, X_test = X.iloc[train_index], X.iloc[test_index]
@@ -24,32 +25,28 @@ class Trainer:
 
             proba, test_time = timeit(self.model.predict_proba)(X_test)
             pred = self.model.predict(X_test)
-            
-            acc = accuracy_score(y_test, pred)
-            if self.multi_class:
-                auc = roc_auc_score(y_test, proba, average='macro', multi_class='ovr')
-                b = np.zeros((y_test.size, y_test.max()+1))
-                b[np.arange(y_test.size),y_test] = 1
-                pr_auc = average_precision_score(b, proba, average='macro')
 
-            else:
-                auc = roc_auc_score(y_test, proba[:, 1])
-                pr_auc = average_precision_score(y_test, proba[:, 1])
+            probas.append(proba)
+            preds.append(pred)
+            labels.append(y_test.values)
 
-            mcc = matthews_corrcoef(y_test, pred)
+        labels = np.concatenate(labels)
+        preds = np.concatenate(preds)
+        probas = np.concatenate(probas)
 
-            avg_acc += acc
-            avg_auc += auc
-            avg_pr += pr_auc
-            avg_mcc += mcc
+        avg_acc = accuracy_score(labels, preds)
+        if self.multi_class:
+            avg_auc = roc_auc_score(labels, probas, average='macro', multi_class='ovr')
+            b = np.zeros((labels.size, labels.max()+1))
+            b[np.arange(labels.size), labels] = 1
+            avg_pr = average_precision_score(b, probas, average='macro')
 
-            avg_train_time += train_time
-            avg_infer_time += test_time
+        else:
+            avg_auc = roc_auc_score(labels, probas[:, 1])
+            avg_pr = average_precision_score(labels, probas[:, 1])
 
-        avg_acc /= self.cv.get_n_splits()
-        avg_auc /= self.cv.get_n_splits()
-        avg_pr /= self.cv.get_n_splits()
-        avg_mcc /= self.cv.get_n_splits()
+        avg_mcc = matthews_corrcoef(labels, preds)
+
         avg_train_time /= self.cv.get_n_splits()
         avg_infer_time /= self.cv.get_n_splits()
         
