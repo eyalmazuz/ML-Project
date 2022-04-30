@@ -26,6 +26,9 @@ class Trainer:
             proba, test_time = timeit(self.model.predict_proba)(X_test)
             pred = self.model.predict(X_test)
 
+            avg_train_time += train_time
+            avg_infer_time += test_time
+
             probas.append(proba)
             preds.append(pred)
             labels.append(y_test.values)
