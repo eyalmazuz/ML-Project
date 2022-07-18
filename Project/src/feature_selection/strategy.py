@@ -7,15 +7,16 @@ import pandas as pd
 from shap import TreeExplainer
 from sklearn.feature_selection import RFE, SelectFdr
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 
 class StrategyType(enum.Enum):
     """
     The type of feature selection strategy.
     """
-    RFE = enum.auto()
-    SELECT_FDR = enum.auto()
     RANDOM_FOREST = enum.auto()
+    SELECT_FDR = enum.auto()
     TREE_EXPLAINER = enum.auto()
+    RFE = enum.auto()
 
 class Strategy(ABC):
     def __init__(self, **kwargs) -> None:
@@ -30,8 +31,8 @@ class Strategy(ABC):
         else:
             self.num_features = 10
         
-        if 'discovery_rate' in kwargs:
-            self.discovery_rate = kwargs['discovery_rate']
+        if 'false_discovery_rate' in kwargs:
+            self.discovery_rate = kwargs['false_discovery_rate']
         else:
             self.discovery_rate = 0.1
     
@@ -64,9 +65,9 @@ class RFEStrategy(Strategy):
         super().__init__(**kwargs)
 
     def select_features(self, X, y, **kwargs):
-        rf = RandomForestClassifier(n_estimators=self.num_estimators)
+        rf = XGBClassifier(n_estimators=self.num_estimators, n_jobs=-1)
         rf.fit(X, y)
-        rfe = RFE(estimator=rf, n_features_to_select=self.num_features, step=1)
+        rfe = RFE(estimator=rf, n_features_to_select=self.num_features, step=0.05)
         rfe.fit(X, y)
         return rfe.get_support()
     
@@ -92,12 +93,18 @@ class ShapStrategy(Strategy):
         super().__init__(**kwargs)
 
     def select_features(self, X, y, **kwargs):
-        clf=  RandomForestClassifier(n_estimators=self.num_estimators, n_jobs=-1)
+
+        clf=  XGBClassifier(n_estimators=self.num_estimators, n_jobs=-1)
         clf.fit(X, y)
 
-        te = TreeExplainer(clf)
+        te = TreeExplainer(clf, feature_perturbation='interventional')
 
-        feature_importance = te.shap_values(X, y)[-1].sum(axis=0)
+        feature_importance = te.shap_values(X, y)
+        if isinstance(feature_importance, list):
+            feature_importance = feature_importance[0]
+        
+        feature_importance = feature_importance.sum(axis=0)
+
         mask = np.zeros_like(feature_importance, dtype=bool)
         mask[np.argsort(feature_importance)[-self.num_features:]] = True
 
@@ -105,13 +112,14 @@ class ShapStrategy(Strategy):
     def __str__(self):
         return 'ShapStrategy'
 
+
 class TreeStrategy(Strategy):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
     
     def select_features(self, X, y, **kwargs):
-        clf = RandomForestClassifier(n_estimators=self.num_estimators, n_jobs=-1)
+        clf = XGBClassifier(n_estimators=self.num_estimators, n_jobs=-1)
         clf.fit(X, y)
         
         feature_importance =  clf.feature_importances_

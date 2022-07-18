@@ -3,12 +3,13 @@ import time
 
 import pandas as pd
 
-def log_results(path, model, strategy, results, **kwargs):
+def log_results(path, model, results, **kwargs):
     
     di = {}
+    di['dataset name'] = kwargs['dataset_name']
     di['number of samples'] = kwargs['number_of_samples']
     di['original number of features'] = kwargs['original_number_of_features']
-    di['filtering algorithm'] = str(strategy)
+    di['filtering algorithm'] = str(kwargs['strategy'])
     di['model'] = str(model)
     di['feature selection time'] = kwargs['feature_selection_time']
     di['number of features selected'] = kwargs['num_features_selected']
@@ -29,6 +30,7 @@ def log_results(path, model, strategy, results, **kwargs):
         df = pd.DataFrame(columns=di.keys())
 
     df = pd.concat([df, pd.DataFrame.from_dict(di, orient='columns')], axis=0)
+
 
     df.to_csv(path, index=False)
 
